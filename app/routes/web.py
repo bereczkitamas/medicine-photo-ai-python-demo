@@ -1,5 +1,5 @@
 import os
-from typing import List, Dict
+from typing import List, Dict, Any
 
 from flask import Blueprint, render_template, current_app, send_from_directory, request, redirect, url_for, flash
 
@@ -21,6 +21,11 @@ def index():
 @web.route('/uploads/<path:filename>')
 def uploaded_file(filename):
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
+
+
+@web.route('/upload', methods=['GET'])
+def upload_form():
+    return render_template('upload.html')
 
 
 @web.route('/upload', methods=['POST'])
