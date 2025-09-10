@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Upload Image - Medicine Photos</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+<nav class="bg-white border-b border-gray-200 mb-6">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    <a class="text-lg font-semibold" href="/">Medicine Photos</a>
+    <div class="flex gap-2">
+      <a class="px-3 py-1.5 rounded border border-blue-600 text-blue-600 hover:bg-blue-50" href="/">Gallery</a>
+      <a class="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700" href="/upload">Upload</a>
+    </div>
+  </div>
+</nav>
+<div class="max-w-3xl mx-auto px-4">
+  <h1 class="text-xl font-semibold mb-4">Upload Image</h1>
+
+  <div class="mb-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          {% set cat = 'red' if category == 'error' else ('green' if category == 'success' else ('blue' if category == 'info' else 'amber')) %}
+          {% if cat == 'red' %}
+          <div class="rounded border border-red-500 bg-red-50 text-red-700 px-4 py-3 mb-2" role="alert">{{ message }}</div>
+          {% elif cat == 'green' %}
+          <div class="rounded border border-green-500 bg-green-50 text-green-700 px-4 py-3 mb-2" role="alert">{{ message }}</div>
+          {% elif cat == 'amber' %}
+          <div class="rounded border border-amber-500 bg-amber-50 text-amber-700 px-4 py-3 mb-2" role="alert">{{ message }}</div>
+          {% else %}
+          <div class="rounded border border-blue-500 bg-blue-50 text-blue-700 px-4 py-3 mb-2" role="alert">{{ message }}</div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <form action="/upload" method="post" enctype="multipart/form-data" class="bg-white rounded shadow p-4">
+    <div class="mb-4">
+      <label for="file" class="block text-sm font-medium mb-1">Select image</label>
+      <input id="file" type="file" name="file" accept="image/*" required
+             class="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+      <p class="text-xs text-gray-500 mt-1">Supported: PNG, JPG, JPEG, GIF, BMP, WEBP. Max 16MB.</p>
+    </div>
+    <div class="flex gap-2">
+      <a href="/" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50">Cancel</a>
+      <button type="submit" class="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Upload</button>
+    </div>
+  </form>
+</div>
+</body>
+</html>
