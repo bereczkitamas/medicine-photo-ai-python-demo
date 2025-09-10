@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Medicine Package Photos</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
 </head>
 <body class="bg-gray-50 text-gray-900">
 <nav class="bg-white border-b border-gray-200 mb-6">
@@ -38,32 +39,17 @@
 
   <div class="flex items-center justify-between mb-4 gap-2 flex-wrap">
     <h1 class="text-xl font-semibold m-0">Gallery</h1>
-    <form class="flex gap-2 items-center" action="/upload" method="post" enctype="multipart/form-data">
+    <form class="flex gap-2 items-center" hx-post="/upload" hx-target="#gallery" hx-swap="innerHTML" enctype="multipart/form-data">
       <input class="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" type="file" name="file" accept="image/*" required>
       <button class="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700" type="submit">Upload</button>
     </form>
   </div>
 
-  {% if images %}
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-      {% for img in images %}
-        <div>
-          <div class="bg-white rounded shadow h-full overflow-hidden">
-            <a href="{{ img.url }}" target="_blank">
-              <img class="w-full h-[180px] object-cover" src="{{ img.url }}" alt="{{ img.original_name }}">
-            </a>
-            <div class="p-3">
-              <h6 class="font-medium truncate" title="{{ img.original_name }}">{{ img.original_name }}</h6>
-              <p class="text-xs text-gray-500 mb-0">Size: {{ (img.size / 1024)|round(1) }} KB</p>
-              <p class="text-xs text-gray-500">Uploaded: {{ img.uploaded_at }}</p>
-            </div>
-          </div>
-        </div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <div class="rounded border border-blue-500 bg-blue-50 text-blue-700 px-4 py-3">No images uploaded yet.</div>
-  {% endif %}
+  <div id="gallery" hx-get="/partials/gallery" hx-trigger="load" hx-swap="innerHTML">
+    {% include "_gallery.html" %}
+  </div>
+
+  <div id="flash-container" hx-swap-oob="true"></div>
 
   <hr class="my-6 border-gray-200">
   <h3 class="text-lg font-semibold">API</h3>
