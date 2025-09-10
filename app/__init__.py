@@ -6,14 +6,15 @@ from app.repository.image_repository import ImageRepository
 from app.validation.image_validator import ImageValidator
 from app.services.image_service import ImageService
 
-
+# Factory function to create a Flask app instance
 def create_app() -> Flask:
     # Ensure templates path points to project-level templates directory
     templates_path = os.path.join(os.path.dirname(__file__), '..', 'templates')
     app = Flask(__name__, template_folder=templates_path)
     app.config['UPLOAD_FOLDER'] = AppConfig.UPLOAD_DIR
-    app.config['MAX_CONTENT_LENGTH'] = AppConfig.MAX_CONTENT_LENGTH
+    app.config['MAX_CONTENT_LENGTH'] = AppConfig.MAX_CONTENT_LENGTH # set max file size, otherwise it is unlimited
 
+    # see: https://flask.palletsprojects.com/en/stable/config/#SECRET_KEY
     app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key')
 
     # Wiring
@@ -26,7 +27,6 @@ def create_app() -> Flask:
     image_service = ImageService(AppConfig.UPLOAD_DIR, repo, fs, validator)
 
     # Store services on app for access in blueprints
-    app.extensions = getattr(app, 'extensions', {})
     app.extensions['image_service'] = image_service
 
     # Register routes
