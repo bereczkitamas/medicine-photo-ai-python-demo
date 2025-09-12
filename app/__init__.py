@@ -1,10 +1,7 @@
 import os
 from flask import Flask
 from app.config import AppConfig
-from app.storage.filesystem import FileSystem
-from app.repository.image_repository import ImageRepository
-from app.validation.image_validator import ImageValidator
-from app.services.image_service import ImageService
+from app.di import build_container
 
 # Factory function to create a Flask app instance
 def create_app() -> Flask:
@@ -17,17 +14,11 @@ def create_app() -> Flask:
     # see: https://flask.palletsprojects.com/en/stable/config/#SECRET_KEY
     app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key')
 
-    # Wiring
-    fs = FileSystem()
-    # Ensure storage folder and metadata file exist on startup
-    fs.ensure_storage(AppConfig.UPLOAD_DIR, AppConfig.METADATA_FILE)
+    # Build DI container and wire dependencies (dependency-injector)
+    container = build_container(AppConfig)
 
-    repo = ImageRepository(AppConfig.METADATA_FILE, fs)
-    validator = ImageValidator(AppConfig.ALLOWED_EXTENSIONS)
-    image_service = ImageService(AppConfig.UPLOAD_DIR, repo, fs, validator)
-
-    # Store services on app for access in blueprints
-    app.extensions['image_service'] = image_service
+    # Expose commonly used services
+    app.extensions['image_service'] = container.image_service()
 
     # Register routes
     from app.routes.web import web
