@@ -1,6 +1,8 @@
 from typing import Any, Dict, List
-from fastapi import APIRouter, Request, UploadFile, File, HTTPException, status, Depends
+from fastapi import APIRouter, Request, UploadFile, HTTPException, status, Depends
 from fastapi.responses import JSONResponse
+from werkzeug.datastructures import FileStorage
+
 from app.repository.image_repository import ImageRepository
 from app.storage.filesystem import FileSystem
 from app.validation.image_validator import ImageValidator
@@ -32,26 +34,16 @@ async def api_list_images(request: Request, image_service: ImageService = Depend
 
 
 @router.post('/images', status_code=status.HTTP_201_CREATED)
-async def api_upload_image(request: Request, file: UploadFile = File(...), image_service: ImageService = Depends(get_image_service)):
-    # Build URL to uploaded file using FastAPI mounted static path
-    def url_builder(stored: str) -> str:
-        return request.url_for('uploads', path=stored)
-
-    # Convert UploadFile to a Werkzeug-like FileStorage adapter expected by service
-    # The service expects .filename, .mimetype, and a file-like stream for saving
-    class _FileWrapper:
-        def __init__(self, uf: UploadFile):
-            self.filename = uf.filename or ''
-            self.mimetype = uf.content_type or 'application/octet-stream'
-            self.file = uf.file
-        def save(self, path: str):
-            # Write the uploaded content to disk
-            self.file.seek(0)
-            with open(path, 'wb') as out:
-                out.write(self.file.read())
+async def api_upload_image(request: Request,
+                           medicine_name: str,
+                           file: UploadFile,
+                           image_service: ImageService = Depends(get_image_service)):
 
     try:
-        entry = image_service.save_upload(_FileWrapper(file), url_builder)
+        entry = image_service.save_upload(
+            FileStorage(file.file, content_type=file.content_type),
+            lambda stored: request.url_for('uploads', path=stored).path,
+            medicine_name)
         return JSONResponse(content=entry, status_code=status.HTTP_201_CREATED)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

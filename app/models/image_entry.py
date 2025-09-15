@@ -10,3 +10,5 @@ class ImageEntry:
     size: int
     content_type: str
     uploaded_at: str
+    medicine_name: str
+    version: int

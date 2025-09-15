@@ -1,7 +1,9 @@
 from typing import List, Dict, Any
 
-from fastapi import APIRouter, Request, UploadFile, File, status, Depends
+from fastapi import APIRouter, Request, UploadFile, File, status, Depends, Form
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from werkzeug.datastructures import FileStorage
+
 from app.routes.api import get_image_service
 from app.services.image_service import ImageService
 
@@ -32,7 +34,7 @@ async def upload_form(request: Request):
 
 
 @router.post('/upload')
-async def ui_upload(request: Request, file: UploadFile = File(None), image_service: ImageService = Depends(get_image_service)):
+async def ui_upload(request: Request, medicine_name: str = Form(None), file: UploadFile = File(None), image_service: ImageService = Depends(get_image_service)):
     is_htmx = request.headers.get('HX-Request') == 'true'
 
     if file is None:
@@ -48,20 +50,11 @@ async def ui_upload(request: Request, file: UploadFile = File(None), image_servi
 
     # Build URL using mounted static
     def url_builder(stored: str) -> str:
-        return request.url_for('uploads', path=stored)
-
-    class _FileWrapper:
-        def __init__(self, uf: UploadFile):
-            self.filename = uf.filename or ''
-            self.mimetype = uf.content_type or 'application/octet-stream'
-            self.file = uf.file
-        def save(self, path: str):
-            self.file.seek(0)
-            with open(path, 'wb') as out:
-                out.write(self.file.read())
+        return request.url_for('uploads', path=stored).path
 
     try:
-        image_service.save_upload(_FileWrapper(file), url_builder)
+        image_service.save_upload(
+            FileStorage(file.file, filename=file.filename, content_type=file.content_type), url_builder, medicine_name or '')
         if is_htmx:
             images_sorted = sorted(image_service.list_images(), key=lambda image: image.get('uploaded_at', ''), reverse=True)
             return _templates(request).TemplateResponse('_gallery.html', {"request": request, "images": images_sorted})

@@ -1,7 +1,8 @@
 import os
+import typing
 import uuid
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import List, Dict, Any
 
 from werkzeug.datastructures import FileStorage
@@ -28,11 +29,16 @@ class ImageService:
     def is_allowed(self, filename: str) -> bool:
         return self._validator.allowed_file(filename)
 
-    def save_upload(self, file: FileStorage, url_builder) -> Dict[str, Any]:
+    def save_upload(self, file: FileStorage, url_builder: typing.Callable[[str], str], medicine_name: str) -> Dict[str, Any]:
         if file.filename == '':
             raise ValueError('No selected file')
         if not self._validator.allowed_file(file.filename):
             raise ValueError('Unsupported file type')
+
+        # Validate medicine name
+        med = (medicine_name or '').strip()
+        if not med:
+            raise ValueError('Medicine name is required')
 
         original_name = secure_filename(file.filename)
         ext = os.path.splitext(original_name)[1].lower()
@@ -40,6 +46,8 @@ class ImageService:
         self._fs.ensure_storage(self._upload_dir, AppConfig.METADATA_FILE)
         path = os.path.join(self._upload_dir, stored_name)
         self._fs.save_file(file, path)
+
+        version = self.determine_version(med)
 
         size = self._fs.file_size(path)
         entry = ImageEntry(
@@ -49,7 +57,28 @@ class ImageService:
             url=url_builder(stored_name),
             size=size,
             content_type=file.mimetype,
-            uploaded_at=datetime.utcnow().isoformat() + 'Z'
+            uploaded_at=datetime.now(UTC).isoformat() + 'Z',
+            medicine_name=med,
+            version=version
         )
         self._repo.append(asdict(entry))
         return asdict(entry)
+
+    def determine_version(self, med: str) -> int:
+        # Determine version: max an existing version for this medicine_name + 1
+        try:
+            existing = self._repo.load_all()
+        except Exception:
+            existing = []
+        med_lower = med.lower()
+        max_ver = 0
+        for e in existing:
+            if str(e.get('medicine_name', '')).lower() == med_lower:
+                try:
+                    v = int(e.get('version', 0))
+                except Exception:
+                    v = 0
+                if v > max_ver:
+                    max_ver = v
+        version = max_ver + 1 if max_ver >= 0 else 1
+        return version
