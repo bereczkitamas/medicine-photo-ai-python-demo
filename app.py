@@ -1,8 +1,9 @@
 import os
+import uvicorn
 from app import create_app
 
-# Expose `app` for WSGI servers
+# Expose `app` for ASGI servers
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', '5000')), debug=True)
+    uvicorn.run("app:app", host='0.0.0.0', port=int(os.environ.get('PORT', '8000')), reload=True)

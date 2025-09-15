@@ -1,29 +1,43 @@
 import os
-from flask import Flask
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from starlette.templating import Jinja2Templates
 from app.config import AppConfig
-from app.di import build_container
 
-# Factory function to create a Flask app instance
-def create_app() -> Flask:
-    # Ensure templates path points to project-level templates directory
-    templates_path = os.path.join(os.path.dirname(__file__), '..', 'templates')
-    app = Flask(__name__, template_folder=templates_path)
-    app.config['UPLOAD_FOLDER'] = AppConfig.UPLOAD_DIR
-    app.config['MAX_CONTENT_LENGTH'] = AppConfig.MAX_CONTENT_LENGTH # set max file size, otherwise it is unlimited
+# Factory function to create a FastAPI app instance
+def create_app() -> FastAPI:
+    app = FastAPI()
 
-    # see: https://flask.palletsprojects.com/en/stable/config/#SECRET_KEY
-    app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key')
+    # Mount static-like uploads serving
+    app.mount("/uploads", StaticFiles(directory=AppConfig.UPLOAD_DIR), name="uploads")
 
-    # Build DI container and wire dependencies (dependency-injector)
-    container = build_container(AppConfig)
+    # Templates setup
+    templates_dir = os.path.join(os.path.dirname(__file__), '..', 'templates')
+    app.state.templates = Jinja2Templates(directory=templates_dir)
+    # Provide a Flask-compatible helper used by templates
+    app.state.templates.env.globals['get_flashed_messages'] = lambda with_categories=False: []
 
-    # Expose commonly used services
-    app.extensions['image_service'] = container.image_service()
+    # CORS (optional, open by default for demo)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Startup to ensure storage exists
+    @app.on_event("startup")
+    async def _init_storage():
+        from app.storage.filesystem import FileSystem
+        fs = FileSystem()
+        fs.ensure_storage(AppConfig.UPLOAD_DIR, AppConfig.METADATA_FILE)
 
     # Register routes
-    from app.routes.web import web
-    from app.routes.api import api
-    app.register_blueprint(web)
-    app.register_blueprint(api, url_prefix='/api')
+    from app.routes.web import router as web_router
+    from app.routes.api import router as api_router
+    app.include_router(web_router)
+    app.include_router(api_router, prefix="/api")
 
     return app
