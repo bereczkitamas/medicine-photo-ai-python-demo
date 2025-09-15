@@ -28,6 +28,16 @@ async def partial_gallery(request: Request, image_service: ImageService = Depend
     return _templates(request).TemplateResponse('_gallery.html', {"request": request, "images": images_sorted})
 
 
+@router.post('/images/{image_id}/promote', response_class=HTMLResponse)
+async def promote_image_stage(request: Request, image_id: str, image_service: ImageService = Depends(get_image_service)):
+    is_htmx = request.headers.get('HX-Request') == 'true'
+    image_service.promote_stage(image_id)
+    images_sorted = sorted(image_service.list_images(), key=lambda image: image.get('uploaded_at', ''), reverse=True)
+    if is_htmx:
+        return _templates(request).TemplateResponse('_gallery.html', {"request": request, "images": images_sorted})
+    return _templates(request).TemplateResponse('index.html', {"request": request, "images": images_sorted})
+
+
 @router.get('/upload', response_class=HTMLResponse)
 async def upload_form(request: Request):
     return _templates(request).TemplateResponse('upload.html', {"request": request})

@@ -10,7 +10,28 @@
             <h6 class="font-medium truncate" title="{{ img.original_name }}">{{ img.original_name }}</h6>
             <p class="text-xs text-gray-500 mb-0">Medicine: {{ img.medicine_name or 'n/a' }} | Version: {{ img.version or 1 }}</p>
             <p class="text-xs text-gray-500 mb-0">Size: {{ (img.size / 1024)|round(1) }} KB</p>
-            <p class="text-xs text-gray-500">Uploaded: {{ img.uploaded_at }}</p>
+            <p class="text-xs text-gray-500 mb-2">Uploaded: {{ img.uploaded_at }}</p>
+            <div class="flex items-center justify-between">
+              <span class="text-xs">
+                Stage:
+                {% set stage = (img.stage or 'UPLOADED') %}
+                {% if stage == 'ARCHIVED' %}
+                  <span class="px-2 py-0.5 rounded text-white bg-gray-600 text-[11px]">ARCHIVED</span>
+                {% elif stage == 'PROCESSED' %}
+                  <span class="px-2 py-0.5 rounded text-white bg-amber-600 text-[11px]">PROCESSED</span>
+                {% else %}
+                  <span class="px-2 py-0.5 rounded text-white bg-blue-600 text-[11px]">UPLOADED</span>
+                {% endif %}
+              </span>
+              <form hx-post="/images/{{ img.id }}/promote" hx-target="#gallery" hx-swap="innerHTML">
+                {% set is_archived = (stage == 'ARCHIVED') %}
+                <button type="submit"
+                        class="px-2 py-1 rounded text-white text-xs {{ 'bg-gray-400 cursor-not-allowed' if is_archived else 'bg-green-600 hover:bg-green-700' }}"
+                        {% if is_archived %}disabled{% endif %}>
+                  Promote
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>

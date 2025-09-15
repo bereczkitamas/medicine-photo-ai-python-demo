@@ -9,7 +9,7 @@ from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
 from app.config import AppConfig
-from app.models.image_entry import ImageEntry
+from app.models.image_entry import ImageEntry, Stage
 from app.repository.image_repository import ImageRepository
 from app.storage.filesystem import FileSystem
 from app.validation.image_validator import ImageValidator
@@ -24,7 +24,12 @@ class ImageService:
         self._validator = validator
 
     def list_images(self) -> List[Dict[str, Any]]:
-        return self._repo.load_all()
+        # Ensure backward compatibility: default missing stage to UPLOADED
+        images = self._repo.load_all()
+        for img in images:
+            if 'stage' not in img or not img.get('stage'):
+                img['stage'] = Stage.UPLOADED.value
+        return images
 
     def is_allowed(self, filename: str) -> bool:
         return self._validator.allowed_file(filename)
@@ -59,7 +64,8 @@ class ImageService:
             content_type=file.mimetype,
             uploaded_at=datetime.now(UTC).isoformat() + 'Z',
             medicine_name=med,
-            version=version
+            version=version,
+            stage=Stage.UPLOADED.value
         )
         self._repo.append(asdict(entry))
         return asdict(entry)
@@ -82,3 +88,27 @@ class ImageService:
                     max_ver = v
         version = max_ver + 1 if max_ver >= 0 else 1
         return version
+
+    def promote_stage(self, image_id: str) -> List[Dict[str, Any]]:
+        """Promote the stage of the image with the given ID to the next stage.
+        UPLOADED -> PROCESSED -> ARCHIVED (stays at ARCHIVED).
+        Returns the updated list of images.
+        """
+        try:
+            entries = self._repo.load_all()
+        except Exception:
+            entries = []
+        changed = False
+        for e in entries:
+            if e.get('id') == image_id:
+                current_stage: Stage = e.get('stage') or Stage.UPLOADED.value
+                e['stage'] = current_stage.next().value
+                changed = True
+                break
+        if changed:
+            self._repo.save_all(entries)
+        # Ensure defaulting on return as well
+        for img in entries:
+            if 'stage' not in img or not img.get('stage'):
+                img['stage'] = Stage.UPLOADED.value
+        return entries
