@@ -5,7 +5,7 @@ from app.config import AppConfig
 from app.storage.filesystem import FileSystem
 
 
-class ImageRepository:
+class ImageMetadataRepository:
     """Handles metadata persistence (SRP, DIP)."""
     def __init__(self, metadata_file: str, fs: FileSystem):
         self._metadata_file = metadata_file

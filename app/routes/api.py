@@ -3,7 +3,7 @@ from fastapi import APIRouter, Request, UploadFile, HTTPException, status, Depen
 from fastapi.responses import JSONResponse
 from werkzeug.datastructures import FileStorage
 
-from app.repository.image_repository import ImageRepository
+from app.repository.image_repository import ImageMetadataRepository
 from app.storage.filesystem import FileSystem
 from app.validation.image_validator import ImageValidator
 from app.services.image_service import ImageService
@@ -18,13 +18,13 @@ _fs_singleton = FileSystem()
 def get_fs() -> FileSystem:
     return _fs_singleton
 
-def get_repo(fs: FileSystem = Depends(get_fs)) -> ImageRepository:
-    return ImageRepository(metadata_file=AppConfig.METADATA_FILE, fs=fs)
+def get_repo(fs: FileSystem = Depends(get_fs)) -> ImageMetadataRepository:
+    return ImageMetadataRepository(metadata_file=AppConfig.METADATA_FILE, fs=fs)
 
 def get_validator() -> ImageValidator:
     return ImageValidator(allowed_extensions=AppConfig.ALLOWED_EXTENSIONS)
 
-def get_image_service(repo: ImageRepository = Depends(get_repo), fs: FileSystem = Depends(get_fs), validator: ImageValidator = Depends(get_validator)) -> ImageService:
+def get_image_service(repo: ImageMetadataRepository = Depends(get_repo), fs: FileSystem = Depends(get_fs), validator: ImageValidator = Depends(get_validator)) -> ImageService:
     return ImageService(upload_dir=AppConfig.UPLOAD_DIR, repo=repo, fs=fs, validator=validator)
 
 

@@ -39,14 +39,27 @@
 
   <div class="flex items-center justify-between mb-4 gap-2 flex-wrap">
     <h1 class="text-xl font-semibold m-0">Gallery</h1>
-    <form class="flex gap-2 items-center" hx-post="/upload" hx-target="#gallery" hx-swap="innerHTML" enctype="multipart/form-data">
+    <form class="flex gap-2 items-center" hx-post="/upload" hx-target="#gallery" hx-swap="innerHTML" hx-include="#q,#stage" enctype="multipart/form-data">
       <input class="block w-[220px] text-sm border border-gray-300 rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" type="text" name="medicine_name" placeholder="Medicine name" required>
       <input class="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" type="file" name="file" accept="image/*" required>
       <button class="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700" type="submit">Upload</button>
     </form>
   </div>
 
-  <div id="gallery" hx-get="/partials/gallery" hx-trigger="load" hx-swap="innerHTML">
+  <div class="flex items-center gap-2 mb-4 flex-wrap">
+    <input id="q" name="q" value="{{ q or '' }}" placeholder="Filter by medicine name" class="block w-[260px] text-sm border border-gray-300 rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+           hx-get="/partials/gallery" hx-target="#gallery" hx-trigger="keyup changed delay:300ms" hx-include="#q,#stage" />
+    <select id="stage" name="stage" class="block w-[200px] text-sm border border-gray-300 rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            hx-get="/partials/gallery" hx-target="#gallery" hx-trigger="change" hx-include="#q,#stage">
+      <option value="" {% if not stage %}selected{% endif %}>All stages</option>
+      <option value="UPLOADED" {% if stage=='UPLOADED' %}selected{% endif %}>UPLOADED</option>
+      <option value="PROCESSED" {% if stage=='PROCESSED' %}selected{% endif %}>PROCESSED</option>
+      <option value="ARCHIVED" {% if stage=='ARCHIVED' %}selected{% endif %}>ARCHIVED</option>
+    </select>
+    <a class="text-sm text-blue-700 hover:underline" href="/?q=&stage=">Reset</a>
+  </div>
+
+  <div id="gallery" hx-get="/partials/gallery" hx-trigger="load" hx-swap="innerHTML" hx-include="#q,#stage">
     {% include "_gallery.html" %}
   </div>
 

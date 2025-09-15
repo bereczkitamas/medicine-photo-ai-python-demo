@@ -23,7 +23,7 @@
                   <span class="px-2 py-0.5 rounded text-white bg-blue-600 text-[11px]">UPLOADED</span>
                 {% endif %}
               </span>
-              <form hx-post="/images/{{ img.id }}/promote" hx-target="#gallery" hx-swap="innerHTML">
+              <form hx-post="/images/{{ img.id }}/promote" hx-target="#gallery" hx-swap="innerHTML" hx-include="#q,#stage">
                 {% set is_archived = (stage == 'ARCHIVED') %}
                 <button type="submit"
                         class="px-2 py-1 rounded text-white text-xs {{ 'bg-gray-400 cursor-not-allowed' if is_archived else 'bg-green-600 hover:bg-green-700' }}"

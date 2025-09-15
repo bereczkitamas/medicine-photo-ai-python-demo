@@ -10,14 +10,14 @@ from werkzeug.utils import secure_filename
 
 from app.config import AppConfig
 from app.models.image_entry import ImageEntry, Stage
-from app.repository.image_repository import ImageRepository
+from app.repository.image_repository import ImageMetadataRepository
 from app.storage.filesystem import FileSystem
 from app.validation.image_validator import ImageValidator
 
 
 class ImageService:
     """Coordinates upload and listing (SRP, orchestrates collaborators)."""
-    def __init__(self, upload_dir: str, repo: ImageRepository, fs: FileSystem, validator: ImageValidator):
+    def __init__(self, upload_dir: str, repo: ImageMetadataRepository, fs: FileSystem, validator: ImageValidator):
         self._upload_dir = upload_dir
         self._repo = repo
         self._fs = fs
@@ -29,6 +29,19 @@ class ImageService:
         for img in images:
             if 'stage' not in img or not img.get('stage'):
                 img['stage'] = Stage.UPLOADED.value
+        return images
+
+    def filter_images(self, medicine_query: typing.Optional[str] = None, stage: typing.Optional[str] = None) -> List[Dict[str, Any]]:
+        """Return images filtered by optional medicine name contains (case-insensitive)
+        and/or stage equals (UPLOADED/PROCESSED/ARCHIVED). Stage comparison uses string values.
+        """
+        images = self.list_images()
+        med_q = (medicine_query or '').strip().lower()
+        stage_q = (stage or '').strip().upper()
+        if med_q:
+            images = [img for img in images if str(img.get('medicine_name', '')).lower().find(med_q) != -1]
+        if stage_q and stage_q in {Stage.UPLOADED.value, Stage.PROCESSED.value, Stage.ARCHIVED.value}:
+            images = [img for img in images if (img.get('stage') or Stage.UPLOADED.value).upper() == stage_q]
         return images
 
     def is_allowed(self, filename: str) -> bool:
