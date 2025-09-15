@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -7,7 +8,16 @@ from app.config import AppConfig
 
 # Factory function to create a FastAPI app instance
 def create_app() -> FastAPI:
-    app = FastAPI()
+    # Lifespan handler to replace deprecated @app.on_event("startup")
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        from app.storage.filesystem import FileSystem
+        fs = FileSystem()
+        fs.ensure_storage(AppConfig.UPLOAD_DIR, AppConfig.METADATA_FILE)
+        yield
+        # No shutdown actions needed currently
+
+    app = FastAPI(lifespan=lifespan)
 
     # Mount static-like uploads serving
     app.mount("/uploads", StaticFiles(directory=AppConfig.UPLOAD_DIR), name="uploads")
@@ -26,13 +36,6 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-    # Startup to ensure storage exists
-    @app.on_event("startup")
-    async def _init_storage():
-        from app.storage.filesystem import FileSystem
-        fs = FileSystem()
-        fs.ensure_storage(AppConfig.UPLOAD_DIR, AppConfig.METADATA_FILE)
 
     # Register routes
     from app.routes.web import router as web_router
