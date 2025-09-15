@@ -1,6 +1,6 @@
 Medicine Package Photo Management
 
-A minimal Flask web app to upload and list medicine package photos.
+A minimal FastAPI web app to upload and list medicine package photos.
 
 Features
 - REST API
@@ -16,12 +16,16 @@ Dependency Injection
 - Benefits: centralized wiring, easier overrides in tests, clearer composition root.
 
 Run locally
-1. Create and activate a virtual environment (recommended).
-2. Install dependencies:
-   pip install -r requirements.txt
-3. Run the server:
-   python app.py
-4. Open http://localhost:5000 in your browser.
+1. Using Poetry (recommended):
+   - Install Poetry: https://python-poetry.org/docs/#installation
+   - Install deps: poetry install
+   - Run the server: poetry run python app.py
+   - Open http://localhost:8000 in your browser.
+2. Using pip (legacy):
+   - Create and activate a virtual environment (recommended).
+   - Install dependencies: pip install -r requirements.txt
+   - Run the server: python app.py
+   - Open http://localhost:8000 in your browser.
 
 Notes
 - Uploaded files are saved under uploads/ and metadata is tracked in uploads/metadata.json.
@@ -30,8 +34,8 @@ Notes
 
 Used technologies:
 - Python
-- Flask
+- Fastapi
 - Jinja2
 - Tailwind CSS
-- dependency-injector
+- uvicorn
 - htmx
