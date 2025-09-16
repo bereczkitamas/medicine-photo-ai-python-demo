@@ -20,10 +20,13 @@ Run locally
    - Install Poetry: https://python-poetry.org/docs/#installation
    - Install deps: poetry install
    - Run the server: poetry run python app.py
+   - Run tests: poetry run pytest -q
+     - On Windows PowerShell or CMD, the same command applies.
    - Open http://localhost:8000 in your browser.
 2. Using pip (legacy):
    - Create and activate a virtual environment (recommended).
    - Install dependencies: pip install -r requirements.txt
+   - Run tests: pytest -q
    - Run the server: python app.py
    - Open http://localhost:8000 in your browser.
 

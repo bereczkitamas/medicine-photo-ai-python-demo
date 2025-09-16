@@ -114,8 +114,8 @@ class ImageService:
         changed = False
         for e in entries:
             if e.get('id') == image_id:
-                current_stage: Stage = e.get('stage') or Stage.UPLOADED.value
-                e['stage'] = current_stage.next().value
+                current_stage: Stage = e.get('stage') or Stage.UPLOADED
+                e['stage'] = current_stage.next()
                 changed = True
                 break
         if changed:
