@@ -37,6 +37,7 @@ on:
 env:
   PROJECT_ID: 'cloud-playground-472410' # TODO: update to your Google Cloud project ID
   REGION: 'europe-west3' # TODO: update to your region
+  DOCKER_REPOSITORY_NAME: 'docker' # TODO: update to your artifact docker repository id
   SERVICE: 'python-medicine-demo' # TODO: update to your service name
   WORKLOAD_IDENTITY_PROVIDER: 'projects/486663611800/locations/global/workloadIdentityPools/github/providers/github-repo' # TODO: update to your workload identity provider
 
@@ -75,7 +76,7 @@ jobs:
 
       - name: 'Build and Push Container'
         run: |-
-          DOCKER_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{ github.sha }}"
+          DOCKER_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.DOCKER_REPOSITORY_NAME }}:${{ github.sha }}"
           docker build --tag "${DOCKER_TAG}" .
           docker push "${DOCKER_TAG}"
       - name: 'Deploy to Cloud Run'
@@ -88,7 +89,7 @@ jobs:
           region: '${{ env.REGION }}'
           # NOTE: If using a pre-built image, update the image name below:
 
-          image: '${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{ github.sha }}'
+          image: '${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.DOCKER_REPOSITORY_NAME }}:${{ github.sha }}'
       # If required, use the Cloud Run URL output in later steps
       - name: 'Show output'
         run: |2-
