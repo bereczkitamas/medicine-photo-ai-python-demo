@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  web:
+    build: .
+    image: medicine-photo-ai-python-demo:latest
+    container_name: medicine-photo-ai-web
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+    volumes:
+      - uploads:/app/uploads
+    restart: unless-stopped
+
+volumes:
+  uploads:
+    driver: local

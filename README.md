@@ -9,12 +9,6 @@ Features
 - UI
   - GET / — page to upload and view uploaded images
 
-Dependency Injection
-- The app now uses the `dependency-injector` library via `app/di.py` to wire components.
-- `create_app()` builds the container and exposes it:
-  - `current_app.extensions['image_service']` — resolved service instance
-- Benefits: centralized wiring, easier overrides in tests, clearer composition root.
-
 Run locally
 1. Using Poetry (recommended):
    - Install Poetry: https://python-poetry.org/docs/#installation
@@ -34,6 +28,14 @@ Notes
 - Uploaded files are saved under uploads/ and metadata is tracked in uploads/metadata.json.
 - Max upload size is 16 MB. Supported extensions: .png .jpg .jpeg .gif .bmp .webp.
 - This is a simple demo; no authentication is included.
+
+Docker
+- Build and run with Docker:
+  - docker build -t medicine-photo-ai-python-demo .
+  - docker run --rm -p 8000:8000 -e PORT=8000 -v %cd%\uploads:/app/uploads medicine-photo-ai-python-demo
+- Or using docker-compose:
+  - docker compose up --build
+  - Then open http://localhost:8000
 
 Used technologies:
 - Python

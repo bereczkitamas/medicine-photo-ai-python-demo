@@ -1,0 +1,16 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.swp
+*.swo
+.build
+.venv
+venv
+.idea
+.vscode
+.git
+.gitignore
+uploads/*
+!uploads/metadata.json
+*.log
