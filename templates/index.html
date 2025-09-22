@@ -11,9 +11,23 @@
 <nav class="bg-white border-b border-gray-200 mb-6">
   <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
     <a class="text-lg font-semibold" href="/">Medicine Photos</a>
-    <div class="flex gap-2">
-      <a class="px-3 py-1.5 rounded border border-blue-600 text-blue-600 hover:bg-blue-50" href="/">Gallery</a>
-      <a class="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700" href="/upload">Upload</a>
+    <div class="flex items-center gap-3">
+      <div class="flex gap-2">
+        <a class="px-3 py-1.5 rounded border border-blue-600 text-blue-600 hover:bg-blue-50" href="/">Gallery</a>
+        <a class="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700" href="/upload">Upload</a>
+      </div>
+      <div class="w-px h-6 bg-gray-200"></div>
+      {% if request.session and request.session.get('user') %}
+        <div class="flex items-center gap-2">
+          {% if request.session['user'].get('picture') %}
+            <img src="{{ request.session['user']['picture'] }}" alt="avatar" class="w-7 h-7 rounded-full"/>
+          {% endif %}
+          <span class="text-sm">{{ request.session['user'].get('name') or request.session['user'].get('email') }}</span>
+          <a class="px-2 py-1.5 text-sm rounded border border-gray-300 hover:bg-gray-50" href="/logout">Logout</a>
+        </div>
+      {% else %}
+        <a class="px-3 py-1.5 rounded border border-gray-300 hover:bg-gray-50" href="/login">Login with Google</a>
+      {% endif %}
     </div>
   </div>
 </nav>

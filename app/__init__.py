@@ -5,6 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from app.config import AppConfig
+from app.services.auth import ensure_session_middleware
+from app.routes.web import router as web_router
+from app.routes.api import router as api_router
+from app.routes.auth_api import router as auth_router
 
 # Factory function to create a FastAPI app instance
 def create_app() -> FastAPI:
@@ -38,9 +42,9 @@ def create_app() -> FastAPI:
     )
 
     # Register routes
-    from app.routes.web import router as web_router
-    from app.routes.api import router as api_router
+    ensure_session_middleware(app)
     app.include_router(web_router)
     app.include_router(api_router, prefix="/api")
+    app.include_router(auth_router)
 
     return app

@@ -9,6 +9,10 @@ services:
       - "8000:8000"
     environment:
       - PORT=8000
+      # Optional Google OAuth configuration
+      - SESSION_SECRET=dev-compose-secret
+      - GOOGLE_CLIENT_ID=
+      - GOOGLE_CLIENT_SECRET=
     volumes:
       - uploads:/app/uploads
     restart: unless-stopped

@@ -19,6 +19,11 @@
 </nav>
 <div class="max-w-3xl mx-auto px-4">
   <h1 class="text-xl font-semibold mb-4">Upload Image</h1>
+  {% if not request.session or not request.session.get('user') %}
+    <div class="rounded border border-amber-500 bg-amber-50 text-amber-700 px-4 py-3 mb-4">
+      Upload requires login. <a class="underline" href="/login">Login with Google</a>.
+    </div>
+  {% endif %}
 
   <div class="mb-4">
     {% with messages = get_flashed_messages(with_categories=true) %}

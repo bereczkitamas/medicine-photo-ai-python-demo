@@ -39,6 +39,10 @@ async def api_upload_image(request: Request,
                            file: UploadFile,
                            image_service: ImageService = Depends(get_image_service)):
 
+    # Require authentication to upload via API (session-based)
+    if not (getattr(request, 'session', None) and request.session.get('user')):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Authentication required')
+
     try:
         entry = image_service.save_upload(
             FileStorage(file.file, content_type=file.content_type),

@@ -49,12 +49,25 @@ async def promote_image_stage(request: Request, image_id: str, image_service: Im
 
 @router.get('/upload', response_class=HTMLResponse)
 async def upload_form(request: Request) -> Response:
+    # Require authentication for accessing the upload form
+    if not (getattr(request, 'session', None) and request.session.get('user')):
+        return RedirectResponse(url='/login', status_code=status.HTTP_302_FOUND)
     return _templates(request).TemplateResponse('upload.html', {"request": request})
 
 
 @router.post('/upload')
 async def ui_upload(request: Request, medicine_name: str = Form(None), file: UploadFile = File(None), image_service: ImageService = Depends(get_image_service)) -> Response:
     is_htmx = request.headers.get('HX-Request') == 'true'
+
+    # Require authentication to upload
+    if not (getattr(request, 'session', None) and request.session.get('user')):
+        if is_htmx:
+            body = _templates(request).get_template('_gallery.html').render({
+                "request": request,
+                "images": sorted(image_service.list_images(), key=lambda x: x.get('uploaded_at', ''), reverse=True)
+            })
+            return Response(content=body, status_code=401, headers={'HX-Trigger': 'auth-required'})
+        return RedirectResponse(url='/login', status_code=status.HTTP_302_FOUND)
 
     if file is None:
         # HTMX: return gallery and an HX-Trigger header for flash-like behavior

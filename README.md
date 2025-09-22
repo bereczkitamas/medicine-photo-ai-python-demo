@@ -19,6 +19,11 @@ Run locally
    - Run tests: poetry run pytest -q
      - On Windows PowerShell or CMD, the same command applies.
    - Open http://localhost:8000 in your browser.
+   - Optional: Configure Google OAuth by setting environment variables before running:
+     - GOOGLE_CLIENT_ID
+     - GOOGLE_CLIENT_SECRET
+     - SESSION_SECRET (optional, for signing session cookies; a default is used if omitted)
+     - Authorized redirect URI in Google Cloud Console should be: http://localhost:8000/auth/callback
 2. Using pip (legacy):
    - Create and activate a virtual environment (recommended).
    - Install dependencies: pip install -r requirements.txt
@@ -29,7 +34,7 @@ Run locally
 Notes
 - Uploaded files are saved under uploads/ and metadata is tracked in uploads/metadata.json.
 - Max upload size is 16 MB. Supported extensions: .png .jpg .jpeg .gif .bmp .webp.
-- This is a simple demo; no authentication is included.
+- Optional Google login is included for the web UI. Uploading new images requires being logged in. If Google OAuth is not configured, you won't be able to upload via the UI or API.
 
 Docker
 - Build and run with Docker:
