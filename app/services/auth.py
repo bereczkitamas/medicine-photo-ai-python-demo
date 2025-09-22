@@ -1,6 +1,6 @@
 import os
 
-from flask.cli import load_dotenv
+from dotenv import load_dotenv
 from starlette.applications import AppType
 from starlette.middleware.sessions import SessionMiddleware
 from authlib.integrations.starlette_client import OAuth
