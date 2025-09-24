@@ -95,8 +95,7 @@ jobs:
             GOOGLE_CLIENT_ID=486663611800-fsbj4qjnq4jovel69lrbgrdk91ljdc7l.apps.googleusercontent.com
             GOOGLE_CLIENT_SECRET=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
           secrets: |-
-            # As an environment variable:
-            GOOGLE_API_KEY=GOOGLE_AI_API_KEY::latest
+            GOOGLE_API_KEY=GOOGLE_AI_API_KEY:latest
       # If required, use the Cloud Run URL output in later steps
       - name: 'Show output'
         run: |2-
