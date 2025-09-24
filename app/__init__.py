@@ -23,7 +23,15 @@ def create_app() -> FastAPI:
         # No shutdown actions needed currently
 
     configure_logging()
-    app = FastAPI(lifespan=lifespan)
+    app = FastAPI(
+        title="Medicine Photo API",
+        description="API for uploading and listing medicine package photos.",
+        version="1.0.0",
+        lifespan=lifespan,
+        docs_url="/docs",
+        redoc_url="/redoc",
+        openapi_url="/openapi.json",
+    )
 
     # Mount static-like uploads serving
     app.mount("/uploads", StaticFiles(directory=AppConfig.UPLOAD_DIR), name="uploads")

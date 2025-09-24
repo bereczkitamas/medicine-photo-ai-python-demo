@@ -10,7 +10,7 @@ from app.services.image_service import ImageService
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(include_in_schema=False)
 
 
 def _templates(request: Request):

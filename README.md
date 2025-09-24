@@ -10,6 +10,8 @@ Features
   - GET /api/images — list uploaded images (JSON)
 - UI
   - GET / — page to upload and view uploaded images
+- API Docs (Swagger UI)
+  - Open http://localhost:8000/docs for interactive documentation (OpenAPI at /openapi.json)
 
 Run locally
 1. Using Poetry (recommended):

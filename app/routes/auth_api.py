@@ -9,16 +9,18 @@ from app.services.auth import oauth
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(tags=["Auth"]) 
 
-@router.get('/login')
+@router.get('/login', summary="Login with Google",
+            description="Initiate OAuth 2.0 login with Google. Redirects user to Google's consent screen.")
 async def login(request: Request):
     logger.info("GET /login - starting OAuth flow")
     redirect_uri = request.url_for('auth_callback')
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
-@router.get('/auth/callback')
+@router.get('/auth/callback', summary="OAuth callback",
+            description="Handle the OAuth 2.0 callback from Google. On success, stores a minimal user object in the session and redirects to home.")
 async def auth_callback(request: Request):
     try:
         token = await oauth.google.authorize_access_token(request)
@@ -44,7 +46,7 @@ async def auth_callback(request: Request):
     return RedirectResponse(url='/?login=success')
 
 
-@router.get('/logout')
+@router.get('/logout', summary="Logout", description="Clear the current session and redirect to home.")
 async def logout(request: Request):
     email = (request.session.get('user') or {}).get('email') if getattr(request, 'session', None) else None
     request.session.pop('user', None)
