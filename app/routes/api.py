@@ -1,4 +1,5 @@
 from typing import Any, Dict, List
+import logging
 from fastapi import APIRouter, Request, UploadFile, HTTPException, status, Depends
 from fastapi.responses import JSONResponse
 from werkzeug.datastructures import FileStorage
@@ -9,8 +10,9 @@ from app.validation.image_validator import ImageValidator
 from app.services.image_service import ImageService
 from app.config import AppConfig
 
-router = APIRouter()
+logger = logging.getLogger(__name__)
 
+router = APIRouter()
 
 # Dependency providers
 _fs_singleton = FileSystem()
@@ -35,7 +37,10 @@ def get_image_service(repo: ImageMetadataRepository = Depends(get_repo), fs: Fil
 
 @router.get('/images')
 async def api_list_images(request: Request, image_service: ImageService = Depends(get_image_service)) -> List[Dict[str, Any]]:
-    return image_service.list_images()
+    logger.info("GET /api/images from %s", request.client.host if request.client else "unknown")
+    images = image_service.list_images()
+    logger.debug("Returned %d images", len(images))
+    return images
 
 
 @router.post('/images', status_code=status.HTTP_201_CREATED)
@@ -49,10 +54,13 @@ async def api_upload_image(request: Request,
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Authentication required')
 
     try:
+        logger.info("POST /api/images medicine_name='%s' content_type=%s", medicine_name, getattr(file, 'content_type', None))
         entry = image_service.save_upload(
             FileStorage(file.file, content_type=file.content_type),
             lambda stored: request.url_for('uploads', path=stored).path,
             medicine_name)
+        logger.info("Upload succeeded id=%s stored_name=%s", entry.get('id'), entry.get('stored_name'))
         return JSONResponse(content=entry, status_code=status.HTTP_201_CREATED)
     except ValueError as e:
+        logger.warning("Upload failed: %s", e)
         raise HTTPException(status_code=400, detail=str(e))

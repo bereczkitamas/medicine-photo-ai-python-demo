@@ -1,4 +1,5 @@
 import os
+import logging
 from typing import Optional, Tuple
 
 try:
@@ -7,6 +8,7 @@ try:
 except Exception:  # pragma: no cover
     genai = None  # type: ignore
 
+logger = logging.getLogger(__name__)
 
 class PackagePhotoAnalyzer:
     """Thin wrapper around Google Gemini for vision analysis.
@@ -26,9 +28,15 @@ class PackagePhotoAnalyzer:
         self._enabled = bool(self.api_key) and genai is not None
         if self._enabled:
             # Initialize google-genai client
+            logger.info("Initializing Google GenAI client with model=%s", self.model_name)
             self._client = genai.Client(api_key=self.api_key)
         else:
+            logger.warning("PackagePhotoAnalyzer disabled: GOOGLE_API_KEY missing or google-genai not installed")
             self._client = None
+
+    def __del__(self):
+        if self._client:
+            self._client.close()
 
     def analyze_image(self, image_bytes: bytes, mime_type: str) -> Tuple[Optional[bool], Optional[str], Optional[str], Optional[str]]:
         """Return tuple: (is_valid_package, medicine_name, form, substance)
@@ -37,6 +45,7 @@ class PackagePhotoAnalyzer:
         - medicine_name/form/substance: strings if detected; otherwise None
         """
         if not self._enabled:
+            logger.debug("analyze_image skipped: analyzer disabled")
             return None, None, None, None
 
         prompt = (
@@ -53,12 +62,14 @@ class PackagePhotoAnalyzer:
 
         try:
             # Prepare image part for google-genai
+            logger.debug("Calling GenAI generate_content with model=%s, mime=%s, size=%d", self.model_name, mime_type, len(image_bytes))
             resp = self._client.models.generate_content(model=self.model_name, contents=[
                 prompt,
                 types.Part.from_bytes(data=image_bytes, mime_type=mime_type)])
             text = resp.text if hasattr(resp, 'text') else str(resp)
+            logger.debug("GenAI raw response text length=%d", len(text) if text else 0)
         except Exception as e:
-            print(f"Error in analyze_image: {e}")
+            logger.exception("Error in analyze_image: %s", e)
             return None, None, None, None
 
         # Attempt to parse JSON
@@ -84,5 +95,6 @@ class PackagePhotoAnalyzer:
 
             return (bool(is_valid) if isinstance(is_valid, bool) else None,
                     norm(medicine_name), norm(form), norm(substance))
-        except Exception:
+        except Exception as e:
+            logger.warning("Failed to parse GenAI JSON response: %s; text=%s", e, (text[:300] + '...') if text and len(text) > 300 else text)
             return None, None, None, None

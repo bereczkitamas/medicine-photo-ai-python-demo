@@ -1,4 +1,5 @@
 from typing import List, Dict, Any
+import logging
 
 from fastapi import APIRouter, Request, UploadFile, File, status, Depends, Form
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -6,6 +7,8 @@ from werkzeug.datastructures import FileStorage
 
 from app.routes.api import get_image_service
 from app.services.image_service import ImageService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -19,6 +22,7 @@ async def index(request: Request, image_service: ImageService = Depends(get_imag
     # Read filters from query params (for initial page render)
     med_q = request.query_params.get('q')
     stage_q = request.query_params.get('stage')
+    logger.info("GET / index q='%s' stage='%s'", med_q, stage_q)
     images: List[Dict[str, Any]] = image_service.filter_images(med_q, stage_q)
     images_sorted = sorted(images, key=lambda image: image.get('uploaded_at', ''), reverse=True)
     return _templates(request).TemplateResponse('index.html', {"request": request, "images": images_sorted, "q": med_q or '', "stage": (stage_q or '')})
@@ -37,6 +41,7 @@ async def partial_gallery(request: Request, image_service: ImageService = Depend
 @router.post('/images/{image_id}/promote', response_class=HTMLResponse)
 async def promote_image_stage(request: Request, image_id: str, image_service: ImageService = Depends(get_image_service)) -> Response:
     is_htmx = request.headers.get('HX-Request') == 'true'
+    logger.info("POST /images/%s/promote", image_id)
     image_service.promote_stage(image_id)
     # Preserve filters after promote
     med_q = request.query_params.get('q')
@@ -51,6 +56,7 @@ async def promote_image_stage(request: Request, image_id: str, image_service: Im
 async def upload_form(request: Request) -> Response:
     # Require authentication for accessing the upload form
     if not (getattr(request, 'session', None) and request.session.get('user')):
+        logger.info("GET /upload - unauthenticated, redirecting to /login")
         return RedirectResponse(url='/login', status_code=status.HTTP_302_FOUND)
     return _templates(request).TemplateResponse('upload.html', {"request": request})
 
@@ -61,6 +67,7 @@ async def ui_upload(request: Request, medicine_name: str = Form(None), file: Upl
 
     # Require authentication to upload
     if not (getattr(request, 'session', None) and request.session.get('user')):
+        logger.info("POST /upload - unauthenticated")
         if is_htmx:
             body = _templates(request).get_template('_gallery.html').render({
                 "request": request,
@@ -70,6 +77,7 @@ async def ui_upload(request: Request, medicine_name: str = Form(None), file: Upl
         return RedirectResponse(url='/login', status_code=status.HTTP_302_FOUND)
 
     if file is None:
+        logger.warning("POST /upload - missing file")
         # HTMX: return gallery and an HX-Trigger header for flash-like behavior
         if is_htmx:
             body = _templates(request).get_template('_gallery.html').render({
@@ -85,6 +93,7 @@ async def ui_upload(request: Request, medicine_name: str = Form(None), file: Upl
         return request.url_for('uploads', path=stored).path
 
     try:
+        logger.info("UI upload medicine_name='%s' filename='%s' content_type=%s", medicine_name, getattr(file, 'filename', None), getattr(file, 'content_type', None))
         image_service.save_upload(
             FileStorage(file.file, filename=file.filename, content_type=file.content_type), url_builder, medicine_name or '')
         if is_htmx:
@@ -93,7 +102,8 @@ async def ui_upload(request: Request, medicine_name: str = Form(None), file: Upl
             images_sorted = sorted(image_service.filter_images(med_q, stage_q), key=lambda image: image.get('uploaded_at', ''), reverse=True)
             return _templates(request).TemplateResponse('_gallery.html', {"request": request, "images": images_sorted})
         return RedirectResponse(url=f"/?q={request.query_params.get('q','')}&stage={request.query_params.get('stage','')}", status_code=status.HTTP_302_FOUND)
-    except ValueError:
+    except ValueError as e:
+        logger.warning("UI upload failed: %s", e)
         if is_htmx:
             med_q = request.query_params.get('q')
             stage_q = request.query_params.get('stage')

@@ -1,6 +1,7 @@
 import os
 import typing
 import uuid
+import logging
 from dataclasses import asdict
 from datetime import datetime, UTC
 from typing import List, Dict, Any
@@ -16,6 +17,8 @@ from app.validation.image_validator import ImageValidator
 from app.services.photo_analyzer import PackagePhotoAnalyzer
 
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 class ImageService:
     """Coordinates upload and listing (SRP, orchestrates collaborators)."""
@@ -33,6 +36,7 @@ class ImageService:
         for img in images:
             if 'stage' not in img or not img.get('stage'):
                 img['stage'] = Stage.UPLOADED.value
+        logger.debug("list_images -> %d items", len(images))
         return images
 
     def filter_images(self, medicine_query: typing.Optional[str] = None, stage: typing.Optional[str] = None) -> List[Dict[str, Any]]:
@@ -46,6 +50,7 @@ class ImageService:
             images = [img for img in images if str(img.get('medicine_name', '')).lower().find(med_q) != -1]
         if stage_q and stage_q in {Stage.UPLOADED.value, Stage.PROCESSED.value, Stage.ARCHIVED.value}:
             images = [img for img in images if (img.get('stage') or Stage.UPLOADED.value).upper() == stage_q]
+        logger.debug("filter_images q='%s' stage='%s' -> %d items", medicine_query, stage, len(images))
         return images
 
     def is_allowed(self, filename: str) -> bool:
@@ -68,6 +73,7 @@ class ImageService:
         self._fs.ensure_storage(self._upload_dir, AppConfig.METADATA_FILE)
         path = os.path.join(self._upload_dir, stored_name)
         self._fs.save_file(file, path)
+        logger.info("Saved file to %s (size=%s, content_type=%s)", path, getattr(file, 'content_length', None), file.mimetype)
 
         # Default metadata based on input
         med = med_input
@@ -77,7 +83,7 @@ class ImageService:
 
         version = self.__determine_version(med)
 
-        size = file.content_length
+        size = self._fs.file_size(path)
         entry = ImageEntry(
             id=uuid.uuid4().hex,
             original_name=original_name,
@@ -107,10 +113,10 @@ class ImageService:
             with open(path, 'rb') as fbytes:
                 content = fbytes.read()
             analysis_result = self._analyzer.analyze_image(content, file_mimetype)
-        except Exception:
+        except Exception as e:
             # On any analyzer error, proceed without AI influence
-            pass
-        if analysis_result[0] is False:
+            logger.exception("Analyzer error: %s", e)
+        if analysis_result and analysis_result[0] is False:
             # Remove invalid file and reject upload
             # try:
             #     os.remove(path)
@@ -118,12 +124,12 @@ class ImageService:
             #     pass
             raise ValueError('Uploaded image is not recognized as a medicine package')
         # Use detected medicine name if available; otherwise keep user input
-        if analysis_result[1]:
+        if analysis_result and analysis_result[1]:
             med = analysis_result[1]
-        form = analysis_result[2]
-        substance = analysis_result[3]
+        form = analysis_result[2] if analysis_result else None
+        substance = analysis_result[3] if analysis_result else None
         # If critical info missing on image, mark for approval
-        if not analysis_result[1] or not analysis_result[2] or not analysis_result[3]:
+        if not analysis_result or not analysis_result[1] or not analysis_result[2] or not analysis_result[3]:
             stage_value = Stage.APPROVAL_WAITING
 
         return form, med, stage_value, substance
@@ -132,7 +138,8 @@ class ImageService:
         # Determine version: max an existing version for this medicine_name + 1
         try:
             existing = self._repo.load_all()
-        except Exception:
+        except Exception as e:
+            logger.exception("Failed to load existing metadata: %s", e)
             existing = []
         med_lower = med.lower()
         max_ver = 0

@@ -9,6 +9,7 @@ from app.services.auth import ensure_session_middleware
 from app.routes.web import router as web_router
 from app.routes.api import router as api_router
 from app.routes.auth_api import router as auth_router
+from app.logging_config import configure_logging
 
 # Factory function to create a FastAPI app instance
 def create_app() -> FastAPI:
@@ -21,6 +22,7 @@ def create_app() -> FastAPI:
         yield
         # No shutdown actions needed currently
 
+    configure_logging()
     app = FastAPI(lifespan=lifespan)
 
     # Mount static-like uploads serving
