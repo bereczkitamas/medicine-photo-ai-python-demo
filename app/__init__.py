@@ -31,8 +31,6 @@ def create_app() -> FastAPI:
     # Templates setup
     templates_dir = os.path.join(os.path.dirname(__file__), '..', 'templates')
     app.state.templates = Jinja2Templates(directory=templates_dir)
-    # Provide a Flask-compatible helper used by templates
-    app.state.templates.env.globals['get_flashed_messages'] = lambda with_categories=False: []
 
     # CORS (optional, open by default for demo)
     app.add_middleware(

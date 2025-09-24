@@ -34,10 +34,6 @@ class PackagePhotoAnalyzer:
             logger.warning("PackagePhotoAnalyzer disabled: GOOGLE_API_KEY missing or google-genai not installed")
             self._client = None
 
-    def __del__(self):
-        if self._client:
-            self._client.close()
-
     def analyze_image(self, image_bytes: bytes, mime_type: str) -> Tuple[Optional[bool], Optional[str], Optional[str], Optional[str]]:
         """Return tuple: (is_valid_package, medicine_name, form, substance)
 

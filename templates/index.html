@@ -32,25 +32,6 @@
   </div>
 </nav>
 <div class="max-w-6xl mx-auto px-4">
-  <div class="mb-4">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          {% set cat = 'red' if category == 'error' else ('green' if category == 'success' else ('blue' if category == 'info' else 'amber')) %}
-          {% if cat == 'red' %}
-          <div class="rounded border border-red-500 bg-red-50 text-red-700 px-4 py-3 mb-2" role="alert">{{ message }}</div>
-          {% elif cat == 'green' %}
-          <div class="rounded border border-green-500 bg-green-50 text-green-700 px-4 py-3 mb-2" role="alert">{{ message }}</div>
-          {% elif cat == 'amber' %}
-          <div class="rounded border border-amber-500 bg-amber-50 text-amber-700 px-4 py-3 mb-2" role="alert">{{ message }}</div>
-          {% else %}
-          <div class="rounded border border-blue-500 bg-blue-50 text-blue-700 px-4 py-3 mb-2" role="alert">{{ message }}</div>
-          {% endif %}
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-  </div>
-
   <div class="flex items-center justify-between mb-4 gap-2 flex-wrap">
     <h1 class="text-xl font-semibold m-0">Gallery</h1>
     <form class="flex gap-2 items-center" hx-post="/upload" hx-target="#gallery" hx-swap="innerHTML" hx-include="#q,#stage" enctype="multipart/form-data">
