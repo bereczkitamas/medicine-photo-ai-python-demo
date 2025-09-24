@@ -3,13 +3,14 @@ from enum import Enum
 
 
 class Stage(str, Enum):
+    APPROVAL_WAITING = 'APPROVAL_WAITING'
     UPLOADED = 'UPLOADED'
     PROCESSED = 'PROCESSED'
     ARCHIVED = 'ARCHIVED'
 
     def next(self) -> "Stage":
         """Return the next Stage in declaration order; stays at last (ARCHIVED)."""
-        members = list(type(self))
+        members: list[Stage] = list(map(lambda c: c.value, self))
         idx = members.index(self)
         return members[idx] if idx == len(members) - 1 else members[idx + 1]
 

@@ -13,15 +13,19 @@ from app.models.image_entry import ImageEntry, Stage
 from app.repository.image_repository import ImageMetadataRepository
 from app.storage.filesystem import FileSystem
 from app.validation.image_validator import ImageValidator
+from app.services.photo_analyzer import PackagePhotoAnalyzer
 
+from typing import Optional
 
 class ImageService:
     """Coordinates upload and listing (SRP, orchestrates collaborators)."""
-    def __init__(self, upload_dir: str, repo: ImageMetadataRepository, fs: FileSystem, validator: ImageValidator):
+    def __init__(self, upload_dir: str, repo: ImageMetadataRepository, fs: FileSystem, validator: ImageValidator,
+                 analyzer: Optional[PackagePhotoAnalyzer] = None):
         self._upload_dir = upload_dir
         self._repo = repo
         self._fs = fs
         self._validator = validator
+        self._analyzer = analyzer or PackagePhotoAnalyzer()
 
     def list_images(self) -> List[Dict[str, Any]]:
         # Ensure backward compatibility: default missing stage to UPLOADED
@@ -53,9 +57,9 @@ class ImageService:
         if not self._validator.allowed_file(file.filename):
             raise ValueError('Unsupported file type')
 
-        # Validate medicine name
-        med = (medicine_name or '').strip()
-        if not med:
+        # Validate medicine name (keep for backward-compat with UI/tests)
+        med_input = (medicine_name or '').strip()
+        if not med_input:
             raise ValueError('Medicine name is required')
 
         original_name = secure_filename(file.filename)
@@ -65,9 +69,15 @@ class ImageService:
         path = os.path.join(self._upload_dir, stored_name)
         self._fs.save_file(file, path)
 
-        version = self.determine_version(med)
+        # Default metadata based on input
+        med = med_input
+        stage_value = Stage.UPLOADED
 
-        size = self._fs.file_size(path)
+        form, med, stage_value, substance = self.__image_analysis(med, path, stage_value, file.mimetype)
+
+        version = self.__determine_version(med)
+
+        size = file.content_length
         entry = ImageEntry(
             id=uuid.uuid4().hex,
             original_name=original_name,
@@ -78,12 +88,47 @@ class ImageService:
             uploaded_at=datetime.now(UTC).isoformat() + 'Z',
             medicine_name=med,
             version=version,
-            stage=Stage.UPLOADED.value
+            stage=stage_value
         )
-        self._repo.append(asdict(entry))
-        return asdict(entry)
+        entry_dict = asdict(entry)
+        # Attach optional AI fields for downstream consumers
+        if form:
+            entry_dict['form'] = form
+        if substance:
+            entry_dict['substance'] = substance
+        self._repo.append(entry_dict)
+        return entry_dict
 
-    def determine_version(self, med: str) -> int:
+    def __image_analysis(self, med: str, path: str, stage_value: Stage, file_mimetype: str = 'image/*',
+                         ) -> tuple[str, str | None, Stage, str | None]:
+        # Invoke Gemini analysis if available; failures fall back silently
+        analysis_result: tuple[bool, str, str, str] | None = None
+        try:
+            with open(path, 'rb') as fbytes:
+                content = fbytes.read()
+            analysis_result = self._analyzer.analyze_image(content, file_mimetype)
+        except Exception:
+            # On any analyzer error, proceed without AI influence
+            pass
+        if analysis_result[0] is False:
+            # Remove invalid file and reject upload
+            # try:
+            #     os.remove(path)
+            # except Exception:
+            #     pass
+            raise ValueError('Uploaded image is not recognized as a medicine package')
+        # Use detected medicine name if available; otherwise keep user input
+        if analysis_result[1]:
+            med = analysis_result[1]
+        form = analysis_result[2]
+        substance = analysis_result[3]
+        # If critical info missing on image, mark for approval
+        if not analysis_result[1] or not analysis_result[2] or not analysis_result[3]:
+            stage_value = Stage.APPROVAL_WAITING
+
+        return form, med, stage_value, substance
+
+    def __determine_version(self, med: str) -> int:
         # Determine version: max an existing version for this medicine_name + 1
         try:
             existing = self._repo.load_all()

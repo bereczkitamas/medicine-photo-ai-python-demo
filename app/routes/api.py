@@ -24,8 +24,13 @@ def get_repo(fs: FileSystem = Depends(get_fs)) -> ImageMetadataRepository:
 def get_validator() -> ImageValidator:
     return ImageValidator(allowed_extensions=AppConfig.ALLOWED_EXTENSIONS)
 
-def get_image_service(repo: ImageMetadataRepository = Depends(get_repo), fs: FileSystem = Depends(get_fs), validator: ImageValidator = Depends(get_validator)) -> ImageService:
-    return ImageService(upload_dir=AppConfig.UPLOAD_DIR, repo=repo, fs=fs, validator=validator)
+from app.services.photo_analyzer import PackagePhotoAnalyzer
+
+def get_analyzer() -> PackagePhotoAnalyzer:
+    return PackagePhotoAnalyzer()
+
+def get_image_service(repo: ImageMetadataRepository = Depends(get_repo), fs: FileSystem = Depends(get_fs), validator: ImageValidator = Depends(get_validator), analyzer: PackagePhotoAnalyzer = Depends(get_analyzer)) -> ImageService:
+    return ImageService(upload_dir=AppConfig.UPLOAD_DIR, repo=repo, fs=fs, validator=validator, analyzer=analyzer)
 
 
 @router.get('/images')
