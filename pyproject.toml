@@ -17,11 +17,10 @@ starlette = "0.48.0" # fastapi dependency, pinned loosely for compatibility
 authlib = ">=1.3.0"
 itsdangerous = ">=2.2.0"
 dotenv = "0.9.9"
-google-generativeai = ">=0.8.0"
+google-genai = "1.38.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
-httpx = "^0.27.0"
 
 [tool.poetry.scripts]
 app = "app:main"

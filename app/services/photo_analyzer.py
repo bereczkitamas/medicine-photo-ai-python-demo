@@ -2,7 +2,8 @@ import os
 from typing import Optional, Tuple
 
 try:
-    import google.generativeai as genai
+    from google import genai
+    from google.genai import types
 except Exception:  # pragma: no cover
     genai = None  # type: ignore
 
@@ -15,7 +16,7 @@ class PackagePhotoAnalyzer:
     - Extract medicine name, form and active substance from the package text.
 
     It uses environment variable GOOGLE_API_KEY. If not configured or the
-    google.generativeai package is missing, it falls back to a no-op mode
+    google-genai package is missing, it falls back to a no-op mode
     where it returns (None, None, None) meaning unknown.
     """
 
@@ -24,10 +25,10 @@ class PackagePhotoAnalyzer:
         self.api_key = os.environ.get('GOOGLE_API_KEY')
         self._enabled = bool(self.api_key) and genai is not None
         if self._enabled:
-            genai.configure(api_key=self.api_key)
-            self._model = genai.GenerativeModel(self.model_name)
+            # Initialize google-genai client
+            self._client = genai.Client(api_key=self.api_key)
         else:
-            self._model = None
+            self._client = None
 
     def analyze_image(self, image_bytes: bytes, mime_type: str) -> Tuple[Optional[bool], Optional[str], Optional[str], Optional[str]]:
         """Return tuple: (is_valid_package, medicine_name, form, substance)
@@ -50,11 +51,14 @@ class PackagePhotoAnalyzer:
             "Return your answer strictly as JSON with keys: {\"is_valid\": boolean, \"medicine_name\": string|null, \"form\": string|null, \"substance\": string|null}.\n"
         )
 
-        img_part = {"mime_type": mime_type, "data": image_bytes}
         try:
-            resp = self._model.generate_content([prompt, img_part])  # type: ignore
+            # Prepare image part for google-genai
+            resp = self._client.models.generate_content(model=self.model_name, contents=[
+                prompt,
+                types.Part.from_bytes(data=image_bytes, mime_type=mime_type)])
             text = resp.text if hasattr(resp, 'text') else str(resp)
-        except Exception:
+        except Exception as e:
+            print(f"Error in analyze_image: {e}")
             return None, None, None, None
 
         # Attempt to parse JSON
