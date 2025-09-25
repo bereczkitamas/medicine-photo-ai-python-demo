@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Annotated
+from typing import Any, Dict, List, Annotated, Optional
 import logging
 from fastapi import APIRouter, Request, UploadFile, HTTPException, status, File, Form, Depends
 from fastapi.responses import JSONResponse
@@ -14,28 +14,43 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Images API"])
 
-# Dependency providers
+# Dependency providers (singletons)
 _fs_singleton = FileSystem()
+_repo_singleton: Optional[ImageMetadataRepository] = None
+_validator_singleton: Optional[ImageValidator] = None
+_analyzer_singleton: Optional["PackagePhotoAnalyzer"] = None
+_image_service_singleton: Optional[ImageService] = None
 
 def get_fs() -> FileSystem:
     return _fs_singleton
 
 def get_repo(fs: Annotated[FileSystem, Depends(get_fs)]) -> ImageMetadataRepository:
-    return ImageMetadataRepository(metadata_file=AppConfig.METADATA_FILE, fs=fs)
+    global _repo_singleton
+    if _repo_singleton is None:
+        _repo_singleton = ImageMetadataRepository(metadata_file=AppConfig.METADATA_FILE, fs=fs)
+    return _repo_singleton
 
 def get_validator() -> ImageValidator:
-    return ImageValidator(allowed_extensions=AppConfig.ALLOWED_EXTENSIONS)
+    global _validator_singleton
+    if _validator_singleton is None:
+        _validator_singleton = ImageValidator(allowed_extensions=AppConfig.ALLOWED_EXTENSIONS)
+    return _validator_singleton
 
 from app.services.photo_analyzer import PackagePhotoAnalyzer
 
 def get_analyzer() -> PackagePhotoAnalyzer:
-    return PackagePhotoAnalyzer()
-
+    global _analyzer_singleton
+    if _analyzer_singleton is None:
+        _analyzer_singleton = PackagePhotoAnalyzer()
+    return _analyzer_singleton
 
 def get_image_service(repo: Annotated[ImageMetadataRepository, Depends(get_repo)], fs: Annotated[FileSystem, Depends(get_fs)],
                       validator: Annotated[ImageValidator, Depends(get_validator)],
                       analyzer: Annotated[PackagePhotoAnalyzer, Depends(get_analyzer)]) -> ImageService:
-    return ImageService(upload_dir=AppConfig.UPLOAD_DIR, repo=repo, fs=fs, validator=validator, analyzer=analyzer)
+    global _image_service_singleton
+    if _image_service_singleton is None:
+        _image_service_singleton = ImageService(upload_dir=AppConfig.UPLOAD_DIR, repo=repo, fs=fs, validator=validator, analyzer=analyzer)
+    return _image_service_singleton
 
 
 @router.get(
