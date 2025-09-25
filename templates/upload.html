@@ -25,25 +25,6 @@
     </div>
   {% endif %}
 
-  <div class="mb-4">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          {% set cat = 'red' if category == 'error' else ('green' if category == 'success' else ('blue' if category == 'info' else 'amber')) %}
-          {% if cat == 'red' %}
-          <div class="rounded border border-red-500 bg-red-50 text-red-700 px-4 py-3 mb-2" role="alert">{{ message }}</div>
-          {% elif cat == 'green' %}
-          <div class="rounded border border-green-500 bg-green-50 text-green-700 px-4 py-3 mb-2" role="alert">{{ message }}</div>
-          {% elif cat == 'amber' %}
-          <div class="rounded border border-amber-500 bg-amber-50 text-amber-700 px-4 py-3 mb-2" role="alert">{{ message }}</div>
-          {% else %}
-          <div class="rounded border border-blue-500 bg-blue-50 text-blue-700 px-4 py-3 mb-2" role="alert">{{ message }}</div>
-          {% endif %}
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-  </div>
-
   <form action="/upload" method="post" enctype="multipart/form-data" class="bg-white rounded shadow p-4">
     <div class="mb-4">
       <label for="medicine_name" class="block text-sm font-medium mb-1">Medicine name</label>
