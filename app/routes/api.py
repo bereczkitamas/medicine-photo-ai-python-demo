@@ -1,6 +1,6 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Annotated
 import logging
-from fastapi import APIRouter, Request, UploadFile, HTTPException, status, Depends, File, Form
+from fastapi import APIRouter, Request, UploadFile, HTTPException, status, File, Form, Depends
 from fastapi.responses import JSONResponse
 from werkzeug.datastructures import FileStorage
 
@@ -20,7 +20,7 @@ _fs_singleton = FileSystem()
 def get_fs() -> FileSystem:
     return _fs_singleton
 
-def get_repo(fs: FileSystem = Depends(get_fs)) -> ImageMetadataRepository:
+def get_repo(fs: Annotated[FileSystem, Depends(get_fs)]) -> ImageMetadataRepository:
     return ImageMetadataRepository(metadata_file=AppConfig.METADATA_FILE, fs=fs)
 
 def get_validator() -> ImageValidator:
@@ -32,9 +32,9 @@ def get_analyzer() -> PackagePhotoAnalyzer:
     return PackagePhotoAnalyzer()
 
 
-def get_image_service(repo: ImageMetadataRepository = Depends(get_repo), fs: FileSystem = Depends(get_fs),
-                      validator: ImageValidator = Depends(get_validator),
-                      analyzer: PackagePhotoAnalyzer = Depends(get_analyzer)) -> ImageService:
+def get_image_service(repo: Annotated[ImageMetadataRepository, Depends(get_repo)], fs: Annotated[FileSystem, Depends(get_fs)],
+                      validator: Annotated[ImageValidator, Depends(get_validator)],
+                      analyzer: Annotated[PackagePhotoAnalyzer, Depends(get_analyzer)]) -> ImageService:
     return ImageService(upload_dir=AppConfig.UPLOAD_DIR, repo=repo, fs=fs, validator=validator, analyzer=analyzer)
 
 
@@ -57,8 +57,7 @@ def get_image_service(repo: ImageMetadataRepository = Depends(get_repo), fs: Fil
         }
     }
 )
-async def api_list_images(request: Request, image_service: ImageService = Depends(get_image_service)) -> List[
-    Dict[str, Any]]:
+async def api_list_images(request: Request, image_service: Annotated[ImageService, Depends(get_image_service)]) -> List[Dict[str, Any]]:
     logger.info("GET /api/images from %s", request.client.host if request.client else "unknown")
     images = image_service.list_images()
     logger.debug("Returned %d images", len(images))
@@ -87,9 +86,9 @@ async def api_list_images(request: Request, image_service: ImageService = Depend
     }
 )
 async def api_upload_image(request: Request,
+                           image_service: Annotated[ImageService, Depends(get_image_service)],
                            medicine_name: str = Form(...),
-                           file: UploadFile = File(...),
-                           image_service: ImageService = Depends(get_image_service)):
+                           file: UploadFile = File(...)):
     """
     Upload an image with fields:
     - medicine_name: string form field

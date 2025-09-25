@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Annotated
 import logging
 
 from fastapi import APIRouter, Request, UploadFile, File, status, Depends, Form
@@ -18,7 +18,7 @@ def _templates(request: Request):
 
 
 @router.get('/', response_class=HTMLResponse)
-async def index(request: Request, image_service: ImageService = Depends(get_image_service)) -> Response:
+async def index(request: Request, image_service: Annotated[ImageService, Depends(get_image_service)]) -> Response:
     # Read filters from query params (for initial page render)
     med_q = request.query_params.get('q')
     stage_q = request.query_params.get('stage')
@@ -29,7 +29,7 @@ async def index(request: Request, image_service: ImageService = Depends(get_imag
 
 
 @router.get('/partials/gallery', response_class=HTMLResponse)
-async def partial_gallery(request: Request, image_service: ImageService = Depends(get_image_service)) -> Response:
+async def partial_gallery(request: Request, image_service: Annotated[ImageService, Depends(get_image_service)]) -> Response:
     # Accept HTMX or query params for filtering
     med_q = request.query_params.get('q')
     stage_q = request.query_params.get('stage')
@@ -39,7 +39,7 @@ async def partial_gallery(request: Request, image_service: ImageService = Depend
 
 
 @router.post('/images/{image_id}/promote', response_class=HTMLResponse)
-async def promote_image_stage(request: Request, image_id: str, image_service: ImageService = Depends(get_image_service)) -> Response:
+async def promote_image_stage(request: Request, image_id: str, image_service: Annotated[ImageService, Depends(get_image_service)]) -> Response:
     is_htmx = request.headers.get('HX-Request') == 'true'
     logger.info("POST /images/%s/promote", image_id)
     image_service.promote_stage(image_id)
@@ -62,7 +62,7 @@ async def upload_form(request: Request) -> Response:
 
 
 @router.post('/upload')
-async def ui_upload(request: Request, medicine_name: str = Form(None), file: UploadFile = File(None), image_service: ImageService = Depends(get_image_service)) -> Response:
+async def ui_upload(request: Request, image_service: Annotated[ImageService, Depends(get_image_service)], medicine_name: str = Form(None), file: UploadFile = File(None)) -> Response:
     is_htmx = request.headers.get('HX-Request') == 'true'
 
     # Require authentication to upload
