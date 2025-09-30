@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 from enum import Enum
+from pydantic import BaseModel, Field
 
 
 class Stage(str, Enum):
@@ -14,10 +14,8 @@ class Stage(str, Enum):
         idx = members.index(self)
         return members[idx] if idx == len(members) - 1 else members[idx + 1]
 
-
-@dataclass
-class ImageEntry:
-    id: str
+class ImageEntry(BaseModel):
+    id: str = Field(..., description="Unique ID")
     original_name: str
     stored_name: str
     url: str
@@ -27,3 +25,8 @@ class ImageEntry:
     medicine_name: str
     version: int
     stage: Stage
+
+    # Allow ORM-like access if needed; serialize enums by value
+    model_config = {
+        'use_enum_values': True
+    }

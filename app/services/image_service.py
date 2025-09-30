@@ -2,7 +2,6 @@ import os
 import typing
 import uuid
 import logging
-from dataclasses import asdict
 from datetime import datetime, UTC
 from typing import List, Dict, Any
 
@@ -96,7 +95,7 @@ class ImageService:
             version=version,
             stage=stage_value
         )
-        entry_dict = asdict(entry)
+        entry_dict = entry.model_dump()
         # Attach optional AI fields for downstream consumers
         if form:
             entry_dict['form'] = form
