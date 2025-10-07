@@ -91,6 +91,7 @@ jobs:
           # NOTE: If using a pre-built image, update the image name below:
 
           image: '${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.DOCKER_REPOSITORY_NAME }}/${{ env.SERVICE }}:${{ github.sha }}'
+          flags: '--port 80'
           env_vars: |-
             GOOGLE_CLIENT_ID=486663611800-fsbj4qjnq4jovel69lrbgrdk91ljdc7l.apps.googleusercontent.com
             GOOGLE_CLIENT_SECRET=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
