@@ -1,35 +1,27 @@
-[tool.poetry]
+[project]
 name = "medicine-photo-ai-python-demo"
 version = "0.1.0"
 description = "Demo FastAPI app for uploading and listing medicine-related photos using local filesystem storage."
-authors = ["Tamas Bereczki <btamas889@gmail.com>"]
-#readme = "README.md"
-packages = [{ include = "app" }]
+authors = [{ name = "Tamas Bereczki", email = "btamas889@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]",
+    "Werkzeug>=3.0.0",
+    "starlette==0.48.0",
+    "authlib>=1.3.0",
+    "itsdangerous>=2.2.0",
+    "dotenv==0.9.9",
+    "google-genai==1.38.0"
+]
 
-[tool.poetry.dependencies]
-python = ">=3.9"
-fastapi = "0.116.2"
-pydantic = ">=2.0,<3.0"
-uvicorn = "0.35.0"
-python-multipart = "0.0.20"
-Jinja2 = ">=3.1.2"
-Werkzeug = ">=3.0.0"
-starlette = "0.48.0" # fastapi dependency, pinned loosely for compatibility
-authlib = ">=1.3.0"
-itsdangerous = ">=2.2.0"
-dotenv = "0.9.9"
-google-genai = "1.38.0"
+[project.scripts]
+app = "app.app:app"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.0.0"
+[project.urls]
+Repository = "https://github.com/bereczkitamas/medicine-photo-ai-python-demo"
 
-[tool.poetry.scripts]
-app = "app:main"
-# FIXME use the `poetry run python app.py` until this doesn't work, maybe the application shoul not be started in main function, but with uvicorn tool?
-
-[tool.poetry.urls]
-"Repository" = "https://github.com/bereczkitamas/medicine-photo-ai-python-demo"
-
-[build-system]
-requires = ["poetry-core>=1.8.0"]
-build-backend = "poetry.core.masonry.api"
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0"
+]

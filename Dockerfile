@@ -1,14 +1,7 @@
-# syntax=docker/dockerfile:1
+FROM python:3.12-slim
 
-# Build stage not necessary; use slim Python runtime
-FROM python:3.13-slim
-
-# Set envs
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    POETRY_VIRTUALENVS_IN_PROJECT=True \
-    PORT=8000
+# Install uv.
+COPY --from=ghcr.io/astral-sh/uv:0.8.23 /uv /uvx /bin/
 
 # Create a non-root user
 RUN useradd -m appuser
@@ -21,14 +14,12 @@ WORKDIR /app
 #     build-essential && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency files first
-COPY pyproject.toml* poetry.lock* ./
+COPY pyproject.toml* uv.lock* ./
 
-RUN pip install poetry==2.2.0
+RUN uv sync --frozen --no-cache
 
 # Copy application code
 COPY . .
-
-RUN poetry install
 
 # Ensure uploads dir exists and is writable
 RUN mkdir -p /app/uploads && chown -R appuser:appuser /app/uploads
@@ -37,8 +28,7 @@ RUN mkdir -p /app/uploads && chown -R appuser:appuser /app/uploads
 USER appuser
 
 # Expose and default command using Uvicorn
-EXPOSE 8000
+EXPOSE 80
 
-# Use app:app as ASGI if running in container runtime directly
-# But keep default command to run app.py which starts uvicorn
-CMD ["poetry", "run", "python", "app.py"]
+# Run the application.
+CMD ["/app/.venv/bin/fastapi", "run", "app/app.py", "--port", "80", "--host", "0.0.0.0"]
