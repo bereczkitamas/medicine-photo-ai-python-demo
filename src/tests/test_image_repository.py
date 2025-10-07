@@ -4,8 +4,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from app.repository.image_repository import ImageMetadataRepository
-from app.config import AppConfig
+from src.app import ImageMetadataRepository
+from src.app import AppConfig
 
 
 @pytest.fixture()

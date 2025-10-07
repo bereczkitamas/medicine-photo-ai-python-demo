@@ -1,13 +1,12 @@
 import os
-import json
 from datetime import datetime
 from unittest.mock import Mock, call
 
 import pytest
 from werkzeug.datastructures import FileStorage
 
-from app.models.image_entry import Stage
-from app.services.image_service import ImageService
+from src.app.models.image_entry import Stage
+from src.app import ImageService
 
 
 @pytest.fixture()

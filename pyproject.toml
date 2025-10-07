@@ -25,3 +25,6 @@ Repository = "https://github.com/bereczkitamas/medicine-photo-ai-python-demo"
 dev = [
     "pytest>=8.0.0"
 ]
+
+[tool.uv]
+package = true

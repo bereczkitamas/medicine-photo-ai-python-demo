@@ -4,12 +4,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
+
 from app.config import AppConfig
+from app.logging_config import configure_logging
 from app.services.auth import ensure_session_middleware
 from app.routes.web import router as web_router
 from app.routes.api import router as api_router
 from app.routes.auth_api import router as auth_router
-from app.logging_config import configure_logging
+
 
 # Factory function to create a FastAPI app instance
 def create_app() -> FastAPI:
@@ -56,3 +58,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router)
 
     return app
+
+# Expose `app` for ASGI servers
+app = create_app()
+

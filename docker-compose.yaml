@@ -12,9 +12,5 @@ services:
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
     volumes:
-      - uploads:/app/uploads
+      - ./uploads:/app/uploads
     restart: unless-stopped
-
-volumes:
-  uploads:
-    driver: local
