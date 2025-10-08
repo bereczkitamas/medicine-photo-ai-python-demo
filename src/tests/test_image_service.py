@@ -5,8 +5,8 @@ from unittest.mock import Mock, call
 import pytest
 from werkzeug.datastructures import FileStorage
 
-from src.app.models.image_entry import Stage
-from src.app import ImageService
+from app.models.image_entry import Stage
+from app.services.image_service import ImageService
 
 
 @pytest.fixture()
@@ -45,7 +45,7 @@ def service(tmp_path, mock_repo, mock_fs, mock_validator) -> ImageService:
     return ImageService(upload_dir=str(tmp_path), repo=mock_repo, fs=mock_fs, validator=mock_validator)
 
 
-def test_list_images_defaults_stage_to_uploaded(service, mock_repo) -> None:
+def test_list_images_defaults_stage_to_uploaded(service: ImageService, mock_repo) -> None:
     mock_repo.load_all.return_value = [
         {'id': '1', 'medicine_name': 'foo', 'version': 1},  # no stage
         {'id': '2', 'medicine_name': 'bar', 'version': 2, 'stage': ''},  # empty stage
@@ -59,7 +59,7 @@ def test_list_images_defaults_stage_to_uploaded(service, mock_repo) -> None:
     assert result[2]['stage'] == Stage.PROCESSED.value
 
 
-def test_filter_images_by_medicine_and_stage(service, mock_repo) -> None:
+def test_filter_images_by_medicine_and_stage(service: ImageService, mock_repo) -> None:
     mock_repo.load_all.return_value = [
         {'id': '1', 'medicine_name': 'Panadol', 'version': 1},
         {'id': '2', 'medicine_name': 'Aspirin', 'version': 1, 'stage': Stage.PROCESSED.value},
@@ -81,14 +81,14 @@ def test_filter_images_by_medicine_and_stage(service, mock_repo) -> None:
     assert [e['id'] for e in r3] == ['2']
 
 
-def test_is_allowed_delegates_to_validator(service, mock_validator) -> None:
+def test_is_allowed_delegates_to_validator(service: ImageService, mock_validator) -> None:
     assert service.is_allowed('x.png') is True
     assert service.is_allowed('x.gif') is False
     # ensure called
     assert mock_validator.allowed_file.call_args_list == [call('x.png'), call('x.gif')]
 
 
-def test_determine_version_happy_path(service, mock_repo) -> None:
+def test_determine_version_happy_path(service: ImageService, mock_repo) -> None:
     mock_repo.load_all.return_value = [
         {'medicine_name': 'Aspirin', 'version': 1},
         {'medicine_name': 'aspirin', 'version': 3},
@@ -100,7 +100,7 @@ def test_determine_version_happy_path(service, mock_repo) -> None:
     assert service.determine_version('ASPIRIN') == 4
 
 
-def test_determine_version_on_repo_error_returns_1(service, mock_repo) -> None:
+def test_determine_version_on_repo_error_returns_1(service: ImageService, mock_repo) -> None:
     mock_repo.load_all.side_effect = RuntimeError('disk error')
     assert service.determine_version('anything') == 1
 
@@ -116,7 +116,7 @@ class DummyFile(FileStorage):
             f.write(self._content)
 
 
-def test_save_upload_success(service, mock_repo, mock_fs) -> None:
+def test_save_upload_success(service: ImageService, mock_repo, mock_fs) -> None:
     file = DummyFile('My Photo.PNG', content=b'abcdef', mimetype='image/png')
 
     # prepare repository to return some existing entries for version calculation
@@ -149,7 +149,7 @@ def test_save_upload_success(service, mock_repo, mock_fs) -> None:
     assert mock_repo.append.called
 
 
-def test_save_upload_errors(service) -> None:
+def test_save_upload_errors(service: ImageService) -> None:
     # empty filename
     with pytest.raises(ValueError, match='No selected file'):
         service.save_upload(DummyFile(''), lambda string: string, 'X')
@@ -163,7 +163,7 @@ def test_save_upload_errors(service) -> None:
         service.save_upload(DummyFile('file.png'), lambda string: string, '   ')
 
 
-def test_promote_stage_and_persist(service, mock_repo) -> None:
+def test_promote_stage_and_persist(service: ImageService, mock_repo) -> None:
     entries = [
         {'id': '1', 'stage': Stage.UPLOADED},
         {'id': '2', 'stage': Stage.PROCESSED},
@@ -190,7 +190,7 @@ def test_promote_stage_and_persist(service, mock_repo) -> None:
     assert mock_repo.save_all.called
 
 
-def test_promote_stage_id_not_found_no_persist(service, mock_repo) -> None:
+def test_promote_stage_id_not_found_no_persist(service: ImageService, mock_repo) -> None:
     entries = [
         {'id': '1'},  # missing stage -> defaults on return
     ]

@@ -78,9 +78,9 @@ class ImageService:
         med = med_input
         stage_value = Stage.UPLOADED
 
-        form, med, stage_value, substance = self.__image_analysis(med, path, stage_value, file.mimetype)
+        med, form, stage_value, substance = self.__image_analysis(med, path, stage_value, file.mimetype)
 
-        version = self.__determine_version(med)
+        version = self.determine_version(med)
 
         size = self._fs.file_size(path)
         entry = ImageEntry(
@@ -115,6 +115,10 @@ class ImageService:
         except Exception as e:
             # On any analyzer error, proceed without AI influence
             logger.exception("Analyzer error: %s", e)
+        if analysis_result is None:
+            logger.warning("Gemini analysis failed for %s", path)
+            return med, None, stage_value, None
+
         if analysis_result and analysis_result[0] is False:
             # Remove invalid file and reject upload
             # try:
@@ -131,9 +135,9 @@ class ImageService:
         if not analysis_result or not analysis_result[1] or not analysis_result[2] or not analysis_result[3]:
             stage_value = Stage.APPROVAL_WAITING
 
-        return form, med, stage_value, substance
+        return med, form, stage_value, substance
 
-    def __determine_version(self, med: str) -> int:
+    def determine_version(self, med: str) -> int:
         # Determine version: max an existing version for this medicine_name + 1
         try:
             existing = self._repo.load_all()

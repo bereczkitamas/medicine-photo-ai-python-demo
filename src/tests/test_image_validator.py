@@ -1,6 +1,6 @@
 import pytest
 
-from src.app import ImageValidator
+from app.validation.image_validator import ImageValidator
 
 
 @pytest.fixture()

@@ -34,7 +34,7 @@ class PackagePhotoAnalyzer:
             logger.warning("PackagePhotoAnalyzer disabled: GOOGLE_API_KEY missing or google-genai not installed")
             self._client = None
 
-    def analyze_image(self, image_bytes: bytes, mime_type: str) -> Tuple[Optional[bool], Optional[str], Optional[str], Optional[str]]:
+    def analyze_image(self, image_bytes: bytes, mime_type: str) -> Tuple[Optional[bool], Optional[str], Optional[str], Optional[str]] | None:
         """Return tuple: (is_valid_package, medicine_name, form, substance)
 
         - is_valid_package: True/False if the model can decide; None if unknown
@@ -42,7 +42,7 @@ class PackagePhotoAnalyzer:
         """
         if not self._enabled:
             logger.debug("analyze_image skipped: analyzer disabled")
-            return None, None, None, None
+            return None
 
         prompt = (
             "You are an expert pharmacist assistant. You will receive a single photo.\n"

@@ -28,3 +28,6 @@ dev = [
 
 [tool.uv]
 package = true
+
+[tool.pytest.ini_options]
+addopts = "--maxfail=1"

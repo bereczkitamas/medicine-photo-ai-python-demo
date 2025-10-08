@@ -10,7 +10,7 @@ class Stage(str, Enum):
 
     def next(self) -> "Stage":
         """Return the next Stage in declaration order; stays at last (ARCHIVED)."""
-        members: list[Stage] = list(map(lambda c: c.value, self))
+        members: list[Stage] = [e for e in Stage]
         idx = members.index(self)
         return members[idx] if idx == len(members) - 1 else members[idx + 1]
 

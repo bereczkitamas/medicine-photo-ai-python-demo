@@ -42,6 +42,18 @@ env:
   WORKLOAD_IDENTITY_PROVIDER: 'projects/486663611800/locations/global/workloadIdentityPools/github/providers/github-repo' # TODO: update to your workload identity provider
 
 jobs:
+  test:
+    runs-on: 'ubuntu-latest'
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@v5'
+
+      - name: 'Install uv'
+        uses: astral-sh/setup-uv@v6
+
+      - name: 'Perform tests'
+        run: uv run pytest
   deploy:
     runs-on: 'ubuntu-latest'
 
@@ -51,7 +63,7 @@ jobs:
 
     steps:
       - name: 'Checkout'
-        uses: 'actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332' # actions/checkout@v4
+        uses: 'actions/checkout@v5'
 
       # Configure Workload Identity Federation and generate an access token.
       #

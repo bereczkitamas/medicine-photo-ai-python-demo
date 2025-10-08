@@ -5,7 +5,7 @@ from unittest.mock import Mock
 import pytest
 from werkzeug.datastructures import FileStorage
 
-from src.app import FileSystem
+from app.storage.filesystem import FileSystem
 
 
 @pytest.fixture()
